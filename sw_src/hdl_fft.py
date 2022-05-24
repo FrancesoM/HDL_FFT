@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 import functools
 
+
 def find_first_free(l):
     for i,el in enumerate(l):
         if el==0:
@@ -100,36 +101,41 @@ def precompute_twiddles(N,direction):
     
     return twiddles
     
-def hdl_fft(vin,twiddles,N0):
+def hdl_fft(vin_nopad,twiddles,N0):
+        
+    N = len(vin_nopad)
     
-    N = len(vin)
+    type_cast = type(vin_nopad[0])
+    vin = np.array( [ type_cast(0) for i in range(N0)  ]  ) 
     
     if N < N0:
         #zero padding input
-        vin = vin+[0]*(N0-N)
+        vin[:N] = np.array(vin_nopad,dtype=type(vin_nopad[0]))
+    else:
+        vin = np.array(vin_nopad,dtype=type(vin_nopad[0]))
     
-    S = math.floor(math.log2(N))
+    S = math.floor(math.log2(N0))
     
     # must be power of two
-    assert math.floor(math.log2(N)) == math.ceil(math.log2(N)) 
+    assert math.floor(math.log2(N0)) == math.ceil(math.log2(N0)) 
     
     # functions to calculate strides
     # X = lambda s : int(N/(2**(S-s)))
-    B = lambda s : int(N/(2**(S-s)))
-    G = lambda s : int(N/(2**(s+1)))
+    B = lambda s : int(N0/(2**(S-s)))
+    G = lambda s : int(N0/(2**(s+1)))
     
     SG = lambda s : 2*B(s)
     
     # perform FFT
     
     buffer = bit_reverse(vin)
-    vout = [0]*N
+    vout = [0]*N0
     
     for s in range( S ):
 
         # At each stage we perform N/2 butterfly
         tw_vec_this_stage = twiddles[s]; 
-        for k in range( N//2):
+        for k in range( N0//2):
         
             bb_i0         = SG(s)*(k//B(s)) + k % B(s)
             bb_i1         = bb_i0 + B(s)
@@ -142,8 +148,7 @@ def hdl_fft(vin,twiddles,N0):
 
         # reiterate 
         buffer = copy.deepcopy(vout)
-        
-        
+         
     return vout
 
 
