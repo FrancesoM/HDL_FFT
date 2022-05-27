@@ -9,6 +9,7 @@ import math
 import numpy as np
 import copy
 import matplotlib.pyplot as plt
+import sys
 
 import functools
 
@@ -61,9 +62,23 @@ def gen_sequence_algo(d,N):
     return out_seq
 
 def btfly(v,w):
+
     ov = [0,0]
     ov[0] = v[0] + v[1]*w[0]
     ov[1] = v[0] + v[1]*w[1]
+    """
+    except: 
+        print(" OF! with: ")
+        print(  v[0].real.format)
+        print(  v[0].imag.format)
+        print(  v[1].real.format)
+        print(  v[1].imag.format)
+        print(  (v[1]*w[0]).real.format)
+        print(  (v[1]*w[1]).imag.format)
+        print( v[0], v[1]*w[0] )
+        print( v[0], v[1]*w[1] )
+        sys.exit()
+    """
     return ov
 
 def omega( N , a , sign):
@@ -101,7 +116,7 @@ def precompute_twiddles(N,direction):
     
     return twiddles
     
-def hdl_fft(vin_nopad,twiddles,N0):
+def hdl_fft(vin_nopad,twiddles,N0,post_stage_op = lambda x:x ):
         
     N = len(vin_nopad)
     
@@ -132,11 +147,11 @@ def hdl_fft(vin_nopad,twiddles,N0):
     vout = [0]*N0
     
     for s in range( S ):
-
+        
         # At each stage we perform N/2 butterfly
         tw_vec_this_stage = twiddles[s]; 
         for k in range( N0//2):
-        
+            
             bb_i0         = SG(s)*(k//B(s)) + k % B(s)
             bb_i1         = bb_i0 + B(s)
 
@@ -147,11 +162,16 @@ def hdl_fft(vin_nopad,twiddles,N0):
             vout[bb_i1] = btfly_out_v[1]
 
         # reiterate 
+        
+        
+        vout = post_stage_op(vout)
+        
+
         buffer = copy.deepcopy(vout)
          
     return vout
 
-
+        
 
 
 
